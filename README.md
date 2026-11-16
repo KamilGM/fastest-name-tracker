@@ -1,2 +1,5 @@
 # fastest-name-tracker
-you will just have to type a name and press enter it aout numbers them for you and is easily manuverable and changable incase of mistakes and has the ability to download and backup the file.
+
+Open `index.html` in a browser. Type one name per line and press Enter to add the next; names are numbered automatically, and you can edit them with the mouse, touchpad, or arrow keys. The first letter of each word is capitalized without autocorrect.
+
+The header shows character, word, and name counts. Use the theme button to switch between light and dark mode. Your list and theme are saved in the browser; **Download** exports a numbered text list, while **Backup** downloads a restorable JSON file and **Restore** loads one.
