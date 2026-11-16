@@ -1,1 +1,467 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f7f5">
+    <title>Namepad</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #f7f7f5;
+        --paper: #fff;
+        --ink: #20201f;
+        --muted: #777773;
+        --line: #e8e8e4;
+        --accent: #bd654b;
+        --hover: #eeeee9;
+        --gutter: #999994;
+        --shadow: 0 18px 60px rgb(34 34 29 / 7%);
+      }
 
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --page: #191a19;
+        --paper: #222321;
+        --ink: #efefeb;
+        --muted: #a4a49d;
+        --line: #373834;
+        --accent: #e18b6e;
+        --hover: #30312e;
+        --gutter: #85867f;
+        --shadow: 0 18px 60px rgb(0 0 0 / 18%);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        background: var(--page);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        transition: background-color 160ms ease, color 160ms ease;
+      }
+
+      button {
+        color: inherit;
+        font: inherit;
+      }
+
+      .topbar {
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 14px clamp(18px, 4vw, 56px);
+      }
+
+      .stats {
+        color: var(--muted);
+        font-size: 13px;
+        letter-spacing: 0.015em;
+        opacity: 0.76;
+        white-space: nowrap;
+      }
+
+      .stats span + span::before {
+        content: "·";
+        margin: 0 9px;
+        color: var(--gutter);
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+      }
+
+      .toolbar button {
+        min-height: 36px;
+        padding: 0 11px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 12px;
+        transition: background-color 120ms ease, color 120ms ease;
+      }
+
+      .toolbar button:hover,
+      .toolbar button:focus-visible {
+        background: var(--hover);
+        color: var(--ink);
+        outline: none;
+      }
+
+      .toolbar .theme-toggle {
+        margin-left: 5px;
+        padding-inline: 12px;
+        border: 1px solid var(--line);
+      }
+
+      main {
+        min-height: calc(100vh - 72px);
+        display: grid;
+        place-items: start center;
+        padding: clamp(8px, 3vh, 30px) 20px 56px;
+      }
+
+      .editor-card {
+        width: min(100%, 900px);
+        height: min(76vh, 760px);
+        min-height: 360px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--paper);
+        box-shadow: var(--shadow);
+      }
+
+      .editor-wrap {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .line-numbers {
+        position: absolute;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        min-width: 64px;
+        padding: 25px 14px 80px 0;
+        color: var(--gutter);
+        text-align: right;
+        pointer-events: none;
+        user-select: none;
+        will-change: transform;
+      }
+
+      .line-number {
+        height: 2.8rem;
+        font-size: 13px;
+        line-height: 2.8rem;
+      }
+
+      .editor {
+        display: block;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 25px 32px 80px 82px;
+        overflow: auto;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--ink);
+        caret-color: var(--accent);
+        font: 400 17px/2.8rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        letter-spacing: 0.005em;
+        tab-size: 2;
+        white-space: pre;
+      }
+
+      .editor::placeholder {
+        color: var(--muted);
+        opacity: 0.58;
+      }
+
+      .notice {
+        position: fixed;
+        right: 20px;
+        bottom: 18px;
+        max-width: min(420px, calc(100vw - 40px));
+        padding: 10px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        color: var(--muted);
+        box-shadow: var(--shadow);
+        font-size: 13px;
+      }
+
+      .notice:empty {
+        display: none;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      @media (max-width: 560px) {
+        .topbar {
+          min-height: 62px;
+          gap: 8px;
+          padding-inline: 12px;
+        }
+
+        .stats {
+          font-size: 11px;
+        }
+
+        .stats span + span::before {
+          margin-inline: 5px;
+        }
+
+        .toolbar {
+          gap: 0;
+        }
+
+        .toolbar button {
+          min-height: 34px;
+          padding-inline: 7px;
+          font-size: 11px;
+        }
+
+        .toolbar .theme-toggle {
+          margin-left: 2px;
+          padding-inline: 8px;
+        }
+
+        main {
+          min-height: calc(100vh - 62px);
+          padding: 8px 10px 20px;
+        }
+
+        .editor-card {
+          height: calc(100vh - 90px);
+          min-height: 300px;
+          border-radius: 9px;
+        }
+
+        .editor {
+          padding-right: 18px;
+          padding-left: 66px;
+          font-size: 15px;
+        }
+
+        .line-numbers {
+          min-width: 52px;
+          padding-right: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="stats" aria-live="polite" aria-label="List statistics">
+        <span id="character-count">0 characters</span>
+        <span id="word-count">0 words</span>
+        <span id="name-count">0 names</span>
+      </div>
+      <nav class="toolbar" aria-label="List actions">
+        <button id="download-button" type="button">Download</button>
+        <button id="backup-button" type="button">Backup</button>
+        <button id="restore-button" type="button">Restore</button>
+        <button id="theme-toggle" class="theme-toggle" type="button">Dark mode</button>
+        <input id="backup-file" class="file-input" type="file" accept="application/json,.json">
+      </nav>
+    </header>
+    <main>
+      <section class="editor-card" aria-label="Name list">
+        <div class="editor-wrap">
+          <div id="line-numbers" class="line-numbers" aria-hidden="true"></div>
+          <textarea
+            id="editor"
+            class="editor"
+            aria-label="Names, one per line"
+            placeholder="Type a name and press Enter"
+            autocomplete="off"
+            autocapitalize="words"
+            autocorrect="off"
+            spellcheck="false"
+            wrap="off"
+            autofocus
+          ></textarea>
+        </div>
+      </section>
+    </main>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        const editor = document.querySelector("#editor");
+        const lineNumbers = document.querySelector("#line-numbers");
+        const characterCount = document.querySelector("#character-count");
+        const wordCount = document.querySelector("#word-count");
+        const nameCount = document.querySelector("#name-count");
+        const themeToggle = document.querySelector("#theme-toggle");
+        const notice = document.querySelector("#notice");
+        const backupFile = document.querySelector("#backup-file");
+        const contentKey = "namepad-content";
+        const themeKey = "namepad-theme";
+        let noticeTimer;
+
+        function showNotice(message) {
+          notice.textContent = message;
+          window.clearTimeout(noticeTimer);
+          noticeTimer = window.setTimeout(() => {
+            notice.textContent = "";
+          }, 4000);
+        }
+
+        function capitalizeWords(text) {
+          return text.replace(/(^|[\s'-])(\p{L})/gu, (match, separator, letter) =>
+            separator + letter.toLocaleUpperCase()
+          );
+        }
+
+        function updateLineNumbers(count) {
+          lineNumbers.replaceChildren();
+          const fragment = document.createDocumentFragment();
+          for (let number = 1; number <= count; number += 1) {
+            const line = document.createElement("div");
+            line.className = "line-number";
+            line.textContent = String(number);
+            fragment.append(line);
+          }
+          lineNumbers.append(fragment);
+          lineNumbers.style.transform = `translateY(${-editor.scrollTop}px)`;
+        }
+
+        function updateStats() {
+          const value = editor.value;
+          const lines = value.split("\n");
+          const characters = Array.from(value.replace(/\n/g, "")).length;
+          const words = value.match(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu) || [];
+          const names = lines.filter((line) => line.trim().length > 0).length;
+
+          characterCount.textContent = `${characters} ${characters === 1 ? "character" : "characters"}`;
+          wordCount.textContent = `${words.length} ${words.length === 1 ? "word" : "words"}`;
+          nameCount.textContent = `${names} ${names === 1 ? "name" : "names"}`;
+          updateLineNumbers(lines.length);
+        }
+
+        function saveContent() {
+          try {
+            localStorage.setItem(contentKey, editor.value);
+          } catch (error) {
+            console.error("Could not save the name list.", error);
+            showNotice("Your list could not be saved in this browser.");
+          }
+        }
+
+        function setTheme(theme, save = true) {
+          document.documentElement.dataset.theme = theme;
+          themeToggle.textContent = theme === "dark" ? "Light mode" : "Dark mode";
+          document.querySelector('meta[name="theme-color"]').content =
+            theme === "dark" ? "#191a19" : "#f7f7f5";
+          if (save) {
+            try {
+              localStorage.setItem(themeKey, theme);
+            } catch (error) {
+              console.error("Could not save the color theme.", error);
+              showNotice("Your theme preference could not be saved.");
+            }
+          }
+        }
+
+        function downloadFile(filename, contents, type) {
+          const url = URL.createObjectURL(new Blob([contents], { type }));
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          link.click();
+          window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function handleEditorChange(event) {
+          if (event.isComposing) {
+            updateStats();
+            saveContent();
+            return;
+          }
+
+          const start = editor.selectionStart;
+          const end = editor.selectionEnd;
+          const value = editor.value;
+          const capitalized = capitalizeWords(value);
+
+          if (capitalized !== value) {
+            editor.value = capitalized;
+            editor.setSelectionRange(
+              capitalizeWords(value.slice(0, start)).length,
+              capitalizeWords(value.slice(0, end)).length
+            );
+          }
+
+          updateStats();
+          saveContent();
+        }
+
+        editor.addEventListener("input", handleEditorChange);
+        editor.addEventListener("compositionend", handleEditorChange);
+
+        editor.addEventListener("scroll", () => {
+          lineNumbers.style.transform = `translateY(${-editor.scrollTop}px)`;
+        });
+
+        themeToggle.addEventListener("click", () => {
+          setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+        });
+
+        document.querySelector("#download-button").addEventListener("click", () => {
+          const numberedNames = editor.value
+            .split("\n")
+            .filter((line) => line.trim().length > 0)
+            .map((name, index) => `${index + 1}. ${name}`)
+            .join("\n");
+          downloadFile("names.txt", numberedNames, "text/plain;charset=utf-8");
+          showNotice("Your numbered list was downloaded.");
+        });
+
+        document.querySelector("#backup-button").addEventListener("click", () => {
+          const backup = JSON.stringify({ version: 1, names: editor.value }, null, 2);
+          downloadFile("names-backup.json", backup, "application/json");
+          showNotice("Your backup was downloaded.");
+        });
+
+        document.querySelector("#restore-button").addEventListener("click", () => {
+          backupFile.click();
+        });
+
+        backupFile.addEventListener("change", async () => {
+          const [file] = backupFile.files;
+          if (!file) return;
+
+          try {
+            const backup = JSON.parse(await file.text());
+            if (backup.version !== 1 || typeof backup.names !== "string") {
+              throw new Error("Unsupported backup format.");
+            }
+            editor.value = capitalizeWords(backup.names);
+            updateStats();
+            saveContent();
+            showNotice("Your backup was restored.");
+          } catch (error) {
+            console.error("Could not restore the name list.", error);
+            showNotice("That backup file is invalid or could not be read.");
+          } finally {
+            backupFile.value = "";
+          }
+        });
+
+        try {
+          editor.value = localStorage.getItem(contentKey) || "";
+          const savedTheme = localStorage.getItem(themeKey);
+          const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          setTheme(savedTheme === "dark" || savedTheme === "light" ? savedTheme : systemTheme, false);
+        } catch (error) {
+          console.error("Could not load saved Namepad settings.", error);
+          showNotice("Saved settings could not be loaded in this browser.");
+        }
+
+        updateStats();
+        editor.focus();
+        editor.setSelectionRange(editor.value.length, editor.value.length);
+      })();
+    </script>
+  </body>
+</html>
